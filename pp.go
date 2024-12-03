@@ -52,6 +52,9 @@ type PrettyPrinter struct {
 
 	// This skips empty fields of structs.
 	omitEmpty bool
+
+	// This prints []byte as a 0x-prefixed hex string.
+	bytesAsHex bool
 }
 
 // New creates a new PrettyPrinter that can be used to pretty print values
@@ -70,6 +73,7 @@ func newPrettyPrinter(callerLevel int) *PrettyPrinter {
 		decimalUint:     true,
 		exportedOnly:    false,
 		omitEmpty:       false,
+		bytesAsHex:      false,
 	}
 }
 
@@ -160,6 +164,10 @@ func (pp *PrettyPrinter) SetOmitEmpty(enabled bool) {
 
 func (pp *PrettyPrinter) SetThousandsSeparator(enabled bool) {
 	pp.thousandsSeparator = enabled
+}
+
+func (pp *PrettyPrinter) SetBytesAsHex(enabled bool) {
+	pp.bytesAsHex = enabled
 }
 
 // SetOutput sets pp's output

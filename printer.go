@@ -22,10 +22,10 @@ const (
 )
 
 func (pp *PrettyPrinter) format(object interface{}) string {
-	return newPrinter(object, &pp.currentScheme, pp.maxDepth, pp.coloringEnabled, pp.decimalUint, pp.exportedOnly, pp.thousandsSeparator, pp.omitEmpty).String()
+	return newPrinter(object, &pp.currentScheme, pp.maxDepth, pp.coloringEnabled, pp.decimalUint, pp.exportedOnly, pp.thousandsSeparator, pp.omitEmpty, pp.bytesAsHex).String()
 }
 
-func newPrinter(object interface{}, currentScheme *ColorScheme, maxDepth int, coloringEnabled bool, decimalUint bool, exportedOnly bool, thousandsSeparator bool, omitEmpty bool) *printer {
+func newPrinter(object interface{}, currentScheme *ColorScheme, maxDepth int, coloringEnabled bool, decimalUint bool, exportedOnly bool, thousandsSeparator bool, omitEmpty bool, bytesAsHex bool) *printer {
 	buffer := bytes.NewBufferString("")
 	tw := new(tabwriter.Writer)
 	tw.Init(buffer, indentWidth, 0, 1, ' ', 0)
@@ -43,6 +43,7 @@ func newPrinter(object interface{}, currentScheme *ColorScheme, maxDepth int, co
 		exportedOnly:       exportedOnly,
 		thousandsSeparator: thousandsSeparator,
 		omitEmpty:          omitEmpty,
+		bytesAsHex:         bytesAsHex,
 	}
 
 	if thousandsSeparator {
@@ -65,6 +66,7 @@ type printer struct {
 	exportedOnly       bool
 	thousandsSeparator bool
 	omitEmpty          bool
+	bytesAsHex         bool
 	localizedPrinter   *message.Printer
 }
 
@@ -298,6 +300,12 @@ func (p *printer) printSlice() {
 		return
 	}
 
+	// Special case for []byte
+	if p.bytesAsHex && p.value.Type().Elem().Kind() == reflect.Uint8 {
+		p.printf("%s{%s}", p.typeString(), p.colorize(fmt.Sprintf("%#x", p.value.Interface()), p.currentScheme.String))
+		return
+	}
+
 	p.println(p.typeString() + "{")
 	p.indented(func() {
 		groupsize := 0
@@ -477,7 +485,7 @@ func (p *printer) colorize(text string, color uint16) string {
 }
 
 func (p *printer) format(object interface{}) string {
-	pp := newPrinter(object, p.currentScheme, p.maxDepth, p.coloringEnabled, p.decimalUint, p.exportedOnly, p.thousandsSeparator, p.omitEmpty)
+	pp := newPrinter(object, p.currentScheme, p.maxDepth, p.coloringEnabled, p.decimalUint, p.exportedOnly, p.thousandsSeparator, p.omitEmpty, p.bytesAsHex)
 	pp.depth = p.depth
 	pp.visited = p.visited
 	if value, ok := object.(reflect.Value); ok {
